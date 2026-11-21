@@ -1,0 +1,11 @@
+# secrets - NEVER commit (hackathon compliance rule)
+.env
+.env.local
+.env*.local
+
+node_modules
+.next
+out
+*.db
+*.tsbuildinfo
+.DS_Store
