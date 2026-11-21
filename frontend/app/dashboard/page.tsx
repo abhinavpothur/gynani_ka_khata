@@ -44,7 +44,7 @@ export default function DashboardPage() {
 
   const isGreen = liveStatus === 'listening'
   const isYellow = liveStatus === 'saved'
-  const isRed = liveStatus === 'limit' || liveStatus === 'over-limit'
+  const isRed = liveStatus === 'limit'
 
   return (
     <div className="min-h-screen bg-background text-foreground relative">
