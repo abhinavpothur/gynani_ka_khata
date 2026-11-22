@@ -1,8 +1,16 @@
 import asyncio
 import json
 import time
-import numpy as np
-import sounddevice as sd
+
+# Safe audio imports for cloud deployment
+try:
+    import sounddevice as sd
+    import numpy as np
+    HAS_AUDIO = True
+except Exception:
+    HAS_AUDIO = False
+    print("[WARNING] No audio hardware found. Local speaker playback disabled.")
+
 from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -36,7 +44,7 @@ async def broadcast(msg: dict):
 
 def play_audio_locally(pcm_chunks: list):
     """Play PCM chunks through the laptop's default speakers."""
-    if not pcm_chunks:
+    if not HAS_AUDIO or not pcm_chunks:
         return
     try:
         full_audio = b"".join(pcm_chunks)
@@ -155,7 +163,11 @@ async def puck(ws: WebSocket):
             except asyncio.CancelledError:
                 pass
         play = None
-        sd.stop()  # Stop local audio playback too on barge-in
+        if HAS_AUDIO:
+            try:
+                sd.stop()  # Stop local audio playback too on barge-in
+            except Exception:
+                pass
 
     async def play_reply(text, status, t0):
         first = True
@@ -190,7 +202,6 @@ async def puck(ws: WebSocket):
             if m.get("text") == "hello":
                 await stop_play()
                 # We keep first_turn as True so the disclosure plays with the first real voice command.
-                # This prevents audio playback bugs during the initial Wi-Fi handshake.
                 await broadcast({"type": "disclosure", "text": DISCLOSURE})
                 await broadcast({"type": "status", "state": "idle"})
             elif m.get("text") == "start":
